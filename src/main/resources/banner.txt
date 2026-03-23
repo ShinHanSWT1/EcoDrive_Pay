@@ -1,0 +1,21 @@
+${AnsiColor.BLUE}_.,:---;,._
+${AnsiColor.BLUE}\_:     :_/
+${AnsiColor.BLUE}  |@. .@|
+${AnsiColor.BLUE}  |     |
+${AnsiColor.BLUE}  ,\.-./ \
+${AnsiColor.BLUE}  ;;`-'   `---__________-----.-.
+${AnsiColor.BLUE}  ;;;                         \_\ ${AnsiColor.RED}             .-'''-.
+${AnsiColor.BLUE}  ';;;                         | ${AnsiColor.RED}             '   _    \
+${AnsiColor.BLUE}  ;    |                      ; ${AnsiColor.BRIGHT_YELLOW}            /   /` '.   \                    _..._  .--.
+${AnsiColor.BLUE}    \   \     \        |      / ${AnsiColor.BRIGHT_YELLOW}     .--./).   |     \  '                  .'     '.|__|
+${AnsiColor.BLUE}     \_, \    /        \     |\ ${AnsiColor.BRIGHT_GREEN}    /.''\\ |   '      |  '.-,.--.         .   .-.   .--.
+${AnsiColor.BLUE}      |';|  |,,,,,,,,/ \    \ \_ ${AnsiColor.BRIGHT_GREEN}  | |  | |\    \     / / |  .-. |   __   |  '   '  |  |
+${AnsiColor.BLUE}      |  |  |           \   /   | ${AnsiColor.GREEN}  \`-' /  `.   ` ..' /  | |  | |.:--.'. |  |   |  |  |
+${AnsiColor.BLUE}      \  \  |           |  / \  | ${AnsiColor.GREEN}  /("'`      '-...-'`   | |  | / |   \ ||  |   |  |  |
+${AnsiColor.BLUE}       | || |           | |   | | ${AnsiColor.BRIGHT_CYAN}  \ '---.               | |  '-`" __ | ||  |   |  |  |
+${AnsiColor.BLUE}       | || |           | |   | | ${AnsiColor.BRIGHT_CYAN}   /'""'.\              | |     .'.''| ||  |   |  |__|
+${AnsiColor.BLUE}       | || |           | |   | | ${AnsiColor.BRIGHT_MAGENTA}  ||     ||             | |    / /   | ||  |   |  |
+${AnsiColor.BLUE}       |_||_|           |_|   |_| ${AnsiColor.BRIGHT_MAGENTA}  \'. __//              |_|    \ \._,\ '/  |   |  |
+${AnsiColor.BLUE}      /_//_/           /_/   /_/ ${AnsiColor.BRIGHT_MAGENTA}    `'---'                       `--'  `"'--'   '--'
+${application.title} ${application.version}
+${AnsiColor.BLUE} Powered by Spring Boot ${spring-boot.version}

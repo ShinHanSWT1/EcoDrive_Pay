@@ -1,0 +1,65 @@
+HELP.md
+
+### Gradle ###
+.gradle/
+build/
+out/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### OS ###
+.DS_Store
+Thumbs.db
+desktop.ini
+
+### Logs ###
+*.log
+logs/
+
+### Env / Secrets ###
+.env
+.env.*
+!.env.example
+
+### Spring config ###
+src/main/resources/application-secret.yml
+src/main/resources/application.properties.bak
+
+### Java / Package ###
+*.class
+*.jar
+*.war
+*.ear
+
+### Upload / runtime files ###
+file_repo/
+uploads/
+tmp/
+
+### Generated ###
+generated/

@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: gorani_pay
+
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+
+  main:
+    banner-mode: console
+
+server:
+  port: 8070
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+  endpoint:
+    health:
+      show-components: always
+
+info:
+  app:
+    name: gorani-pay
+    description: Payment service for GORANI
+    version: 0.0.1
+
+logging:
+  level:
+    org.springframework.security.web: trace
+    com.gorani.ddeonam: debug
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
+

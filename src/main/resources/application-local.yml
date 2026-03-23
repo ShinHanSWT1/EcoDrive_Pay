@@ -1,0 +1,41 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  # 왠만하면 이대로 동일하게 할 것
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/pay_local
+    username: postgres
+    password: gorani
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,loggers
+  endpoint:
+    health:
+      show-details: always
+
+# redis 에 대해서 현재는 주석처리
+# data:
+#    redis:
+#      host: localhost
+#      port: 6379
+logging:
+  level:
+    org.springframework.boot.actuate: INFO
+
+app:
+  upload:
+    path: D:/file_repo

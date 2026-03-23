@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 스프링부트 기본 설정(색상, 기본 변수 등) 불러오기 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+
+    <!-- Spring Boot가 쓰던 컬러 콘솔 패턴을 가져오되, 메서드/라인(%M:%L)만 추가 -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr([%t]){faint} %clr(%-40.40logger{39}.%M:%L){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}" />
+
+    <!-- 콘솔 appender도 부트 기본 템플릿 사용 -->
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+
+
+    <!-- 기본 로그 레벨 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+    <!-- 필요하면 패키지별 로그 레벨 조절 (예시) -->
+    <!--
+    <logger name="com.gorani.guestbook" level="DEBUG"/>
+    <logger name="org.springframework" level="INFO"/>
+    -->
+
+</configuration>
