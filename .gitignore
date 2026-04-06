@@ -48,6 +48,7 @@ logs/
 
 ### Spring config ###
 src/main/resources/application-secret.yml
+src/main/resources/application-local.yml
 src/main/resources/application.properties.bak
 
 ### Java / Package ###
