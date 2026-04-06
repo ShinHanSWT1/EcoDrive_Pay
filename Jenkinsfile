@@ -22,7 +22,7 @@ pipeline {
         DB_HOST = "localhost"
         DB_NAME = "pay_dev"
         DB_USERNAME = "postgres"
-        DB_PORT = "5432"
+        DB_PORT = "5433"
 
         REDIS_HOST = "localhost"
         REDIS_PORT = "6379"
