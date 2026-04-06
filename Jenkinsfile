@@ -18,7 +18,7 @@ pipeline {
 
         SPRING_PROFILE = "dev"
 
-        DB_URL = "jdbc:postgresql://localhost:5432/ecodrive_dev"
+        DB_URL = "jdbc:postgresql://localhost:5433/pay_dev"
         DB_HOST = "localhost"
         DB_NAME = "pay_dev"
         DB_USERNAME = "postgres"
