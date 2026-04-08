@@ -6,9 +6,9 @@ spring:
   # 왠만하면 이대로 동일하게 할 것
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/pay_local
+    url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
-    password: gorani
+    password: test1234
 
   jpa:
     hibernate:
@@ -27,10 +27,10 @@ management:
     health:
       show-details: always
 
-  data:
-    redis:
-      host: localhost
-      port: 6379
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
 
 logging:
   level:
