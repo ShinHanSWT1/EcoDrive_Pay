@@ -3,6 +3,8 @@ package com.gorani.gorani_pay.entity;
 import lombok.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "pay_idempotency")
@@ -24,9 +26,11 @@ public class PayIdempotency {
     @Column(name = "external_order_id", nullable = false)
     private String externalOrderId;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String payload;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "response_payload", columnDefinition = "jsonb")
     private String responsePayload;
 
