@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface PayRefundRepository extends JpaRepository<PayRefund, Long> {
 
-    List<PayRefund> findByPayPaymentId(Long payPaymentId);
+    List<PayRefund> findByPayPaymentIdOrderByIdDesc(Long payPaymentId);
 }

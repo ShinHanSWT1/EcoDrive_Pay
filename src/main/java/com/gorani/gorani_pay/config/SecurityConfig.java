@@ -1,24 +1,35 @@
 package com.gorani.gorani_pay.config;
 
-
+import com.gorani.gorani_pay.security.InternalTokenFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {
 
+    private final InternalTokenFilter internalTokenFilter;
+
+    public SecurityConfig(InternalTokenFilter internalTokenFilter) {
+        this.internalTokenFilter = internalTokenFilter;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        // 개발용으로 편의를 위해 초기에 모든 api 허용하기 위한 용도
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
-                );
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/pay/**").permitAll()
+                        .anyRequest().denyAll()
+                )
+                .addFilterBefore(internalTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

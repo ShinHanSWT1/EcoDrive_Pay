@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface PayTransactionRepository extends JpaRepository<PayTransaction, Long> {
 
-    List<PayTransaction> findByPayAccountId(Long payAccountId);
+    List<PayTransaction> findByPayAccountIdOrderByIdDesc(Long payAccountId);
 }
