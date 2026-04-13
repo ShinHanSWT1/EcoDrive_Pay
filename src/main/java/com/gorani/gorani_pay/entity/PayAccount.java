@@ -38,6 +38,12 @@ public class PayAccount {
     @Column(nullable = false)
     private Integer balance = 0;
 
+    @Column(name = "point", nullable = false)
+    private Long points = 0L;
+
+    @Column(name = "monthusage", nullable = false) // DB 컬럼명과 매칭
+    private Long monthUsage = 0L;
+
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE";
 
