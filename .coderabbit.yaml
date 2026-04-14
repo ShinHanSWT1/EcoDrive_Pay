@@ -6,6 +6,11 @@ tone_instructions: >
   4. 칭찬은 짧고 위트 있게 작성하세요.
 
 reviews:
+  auto_review:
+    base_branches:
+      - master
+      - dev
+    enabled: true
   profile: chill
   request_changes_workflow: false
   high_level_summary: true
