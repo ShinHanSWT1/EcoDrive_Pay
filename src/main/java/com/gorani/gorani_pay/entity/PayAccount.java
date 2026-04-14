@@ -1,11 +1,6 @@
 package com.gorani.gorani_pay.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -41,9 +36,6 @@ public class PayAccount {
     @Column(name = "point", nullable = false)
     private Long points = 0L;
 
-    @Column(name = "monthusage", nullable = false) // DB 컬럼명과 매칭
-    private Long monthUsage = 0L;
-
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE";
 
@@ -72,5 +64,15 @@ public class PayAccount {
         if (amount == null || amount <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
+    }
+
+    @Transient
+    private Long monthUsage;
+
+    public void setMonthUsage(Long monthUsage) {
+        this.monthUsage = monthUsage;
+    }
+    public Long getMonthUsage() {
+        return this.monthUsage;
     }
 }

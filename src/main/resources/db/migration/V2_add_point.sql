@@ -1,0 +1,1 @@
+ALTER TABLE pay_accounts ADD COLUMN point bigint DEFAULT 0 NOT NULL;

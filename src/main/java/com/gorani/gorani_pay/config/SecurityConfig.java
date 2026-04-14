@@ -1,6 +1,6 @@
-package com.gorani.gorani_pay.config;
+package com.gorani.gorani_pay.config; // 기존 패키지명 유지
 
-import com.gorani.gorani_pay.security.InternalTokenFilter;
+import com.gorani.gorani_pay.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -9,15 +9,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+
 import java.util.List;
 
 @Configuration
 public class SecurityConfig {
 
-    private final InternalTokenFilter internalTokenFilter;
+    // 1. 기존 InternalTokenFilter 대신 JwtAuthenticationFilter를 주입받습니다.
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(InternalTokenFilter internalTokenFilter) {
-        this.internalTokenFilter = internalTokenFilter;
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
@@ -39,10 +41,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/pay/**").permitAll()
+                        .requestMatchers("/pay/webhooks/**").permitAll()
+                        .requestMatchers("/pay/**").authenticated()
                         .anyRequest().denyAll()
                 )
-                .addFilterBefore(internalTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                // 3. 문지기 교체: 인증 필터 앞에 우리의 JWT 필터를 세워둡니다.
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

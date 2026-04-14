@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -36,6 +38,22 @@ public class WalletService {
     // 결제 사용자 저장소
     private final PayUserRepository payUserRepository;
 
+    public PayAccount getAccount(Long payUserId) {
+        PayAccount account = accountRepository.findByPayUserId(payUserId)
+                .orElseGet(() -> {
+                    PayAccount newAccount = new PayAccount();
+                    newAccount.setPayUserId(payUserId);
+                    newAccount.setBalance(0);
+                    newAccount.setPoints(0L);
+
+                    // DB에 저장하고 바로 반환
+                    return accountRepository.save(newAccount);
+                });
+
+        // 이후 로직은 동일
+        Long monthlyUsage = getMonthlyUsage(account.getId());
+        account.setMonthUsage(monthlyUsage);
+        return account;
     // 계좌 생성 기능
     public PayAccount createAccount(CreateAccountRequest request) {
         PayUser payUser = payUserRepository.findByExternalUserId(request.getExternalUserId())
@@ -146,6 +164,11 @@ public class WalletService {
         return account;
     }
 
+    public Long getMonthlyUsage(Long payAccountId) {
+        LocalDateTime startOfMonth = java.time.YearMonth.now().atDay(1).atStartOfDay();
+        LocalDateTime endOfMonth = java.time.YearMonth.now().atEndOfMonth().atTime(java.time.LocalTime.MAX);
+
+        return transactionRepository.sumUsageByPeriod(payAccountId, startOfMonth, endOfMonth);
     // 결제 사용자 생성 기능
     private PayUser createPayUser(CreateAccountRequest request) {
         PayUser payUser = new PayUser();
