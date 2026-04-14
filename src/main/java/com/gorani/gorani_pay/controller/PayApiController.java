@@ -1,6 +1,7 @@
 package com.gorani.gorani_pay.controller;
 
 import com.gorani.gorani_pay.dto.AmountRequest;
+import com.gorani.gorani_pay.dto.CreateAccountRequest;
 import com.gorani.gorani_pay.dto.CreatePaymentRequest;
 import com.gorani.gorani_pay.dto.ExpirePaymentsRequest;
 import com.gorani.gorani_pay.dto.RefundRequest;
@@ -37,6 +38,12 @@ public class PayApiController {
     private final PaymentService paymentService;
     private final WebhookLogService webhookLogService;
 
+    @PostMapping("/accounts")
+    public PayAccount createAccount(@Valid @RequestBody CreateAccountRequest request) {
+        log.info("[Pay] create account - externalUserId={}, ownerName={}", request.getExternalUserId(), request.getOwnerName());
+        return walletService.createAccount(request);
+    }
+
     @PostMapping("/charge")
     public PayAccount charge(@Valid @RequestBody AmountRequest request) {
         log.info("[Pay] charge request - payUserId={}, amount={}", request.getPayUserId(), request.getAmount());
@@ -53,6 +60,12 @@ public class PayApiController {
     public PayAccount getAccount(@PathVariable Long payUserId) {
         log.info("[Pay] account lookup - payUserId={}", payUserId);
         return walletService.getAccount(payUserId);
+    }
+
+    @GetMapping("/accounts/by-external-user/{externalUserId}")
+    public PayAccount getAccountByExternalUserId(@PathVariable Long externalUserId) {
+        log.info("[Pay] account lookup by external user - externalUserId={}", externalUserId);
+        return walletService.getAccountByExternalUserId(externalUserId);
     }
 
     @GetMapping("/account/{payUserId}/transactions")
