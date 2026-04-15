@@ -1,5 +1,7 @@
 package com.gorani.gorani_pay.service;
 
+import com.gorani.gorani_pay.client.TossPaymentClient;
+import com.gorani.gorani_pay.dto.ChargeConfirmRequest;
 import com.gorani.gorani_pay.dto.CreateAccountRequest;
 import com.gorani.gorani_pay.entity.PayAccount;
 import com.gorani.gorani_pay.entity.PayLedger;
@@ -11,6 +13,7 @@ import com.gorani.gorani_pay.repository.PayLedgerRepository;
 import com.gorani.gorani_pay.repository.PayTransactionRepository;
 import com.gorani.gorani_pay.repository.PayUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.flywaydb.core.api.ErrorCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +40,8 @@ public class WalletService {
     private final LedgerService ledgerService;
     // 결제 사용자 저장소
     private final PayUserRepository payUserRepository;
+    // Toss PG 연동
+    private final TossPaymentClient tossPaymentClient;
 
     // 계좌 생성
     public PayAccount createAccount(CreateAccountRequest request) {
@@ -198,5 +203,43 @@ public class WalletService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    @Transactional
+    public PayAccount confirmCharge(ChargeConfirmRequest request) {
+        // 1. 토스 서버 승인 요청 (트랜잭션)
+        tossPaymentClient.confirmPayment(request.paymentKey(), request.orderId(), request.amount());
+
+        // 2. 유저 지갑 조회 (기존 방식인 findAccountOrThrow 활용)
+        PayAccount account = findAccountOrThrow(request.payUserId());
+
+        // 3. 지갑 잔액 찐으로 증가!
+        try {
+            account.addBalance(request.amount());
+        } catch (IllegalArgumentException ex) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, ex.getMessage());
+        }
+
+        // 4. 이용 내역(영수증) 작성 (기존 코드 스타일과 완벽 통일)
+        PayTransaction tx = new PayTransaction();
+        tx.setPayAccountId(account.getId()); // 객체 대신 ID 값 세팅!
+        tx.setTransactionType("CHARGE");     // 충전 타입
+        tx.setDirection("CREDIT");           // 입금
+        tx.setAmount(request.amount());
+        tx.setOccurredAt(LocalDateTime.now());
+        transactionRepository.save(tx);
+
+        // 5. 기존 시스템처럼 원장(Ledger) 장부에도 기록 추가!
+        ledgerService.record(
+                tx.getId(),
+                account.getId(),
+                "CREDIT",
+                request.amount(),
+                account.getBalance(),
+                "TOSS_CHARGE", // 토스 충전임을 명시
+                account.getId()
+        );
+
+        return account;
     }
 }

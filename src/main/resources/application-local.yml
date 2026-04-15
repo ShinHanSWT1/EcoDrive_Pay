@@ -41,3 +41,6 @@ app:
     path: D:/file_repo
   auth:
     internal-token: local-dev-token
+  toss:
+    secret-key: test_sk_oEjb0gm23PEwX6JWyM7vVpGwBJn5
+    url: https://api.tosspayments.com/v1/payments/confirm
