@@ -39,3 +39,5 @@ logging:
 app:
   upload:
     path: D:/file_repo
+  auth:
+    internal-token: local-dev-token
