@@ -1,10 +1,6 @@
 package com.gorani.gorani_pay.controller;
 
-import com.gorani.gorani_pay.dto.AmountRequest;
-import com.gorani.gorani_pay.dto.CreateAccountRequest;
-import com.gorani.gorani_pay.dto.CreatePaymentRequest;
-import com.gorani.gorani_pay.dto.ExpirePaymentsRequest;
-import com.gorani.gorani_pay.dto.RefundRequest;
+import com.gorani.gorani_pay.dto.*;
 import com.gorani.gorani_pay.entity.PayAccount;
 import com.gorani.gorani_pay.entity.PayLedger;
 import com.gorani.gorani_pay.entity.PayPayment;
@@ -142,5 +138,11 @@ public class PayApiController {
     public List<PayWebhookLog> getWebhookLogs(@RequestParam(required = false) String externalOrderId) {
         log.info("[Pay] webhook logs - externalOrderId={}", externalOrderId);
         return webhookLogService.getLogs(externalOrderId);
+    }
+
+    @PostMapping("/charge/confirm")
+    public org.springframework.http.ResponseEntity<PayAccount> confirmCharge(@RequestBody @jakarta.validation.Valid ChargeConfirmRequest request) {
+        PayAccount updatedAccount = walletService.confirmCharge(request);
+        return org.springframework.http.ResponseEntity.ok(updatedAccount);
     }
 }
