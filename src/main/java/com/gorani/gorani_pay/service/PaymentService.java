@@ -3,7 +3,6 @@ package com.gorani.gorani_pay.service;
 import com.gorani.gorani_pay.dto.CreatePaymentRequest;
 import com.gorani.gorani_pay.dto.RefundRequest;
 import com.gorani.gorani_pay.entity.PayAccount;
-import com.gorani.gorani_pay.entity.PayIdempotency;
 import com.gorani.gorani_pay.entity.PayPayment;
 import com.gorani.gorani_pay.entity.PayRefund;
 import com.gorani.gorani_pay.entity.PayTransaction;
@@ -39,9 +38,9 @@ public class PaymentService {
 
     @Transactional
     public PayPayment createPayment(CreatePaymentRequest request, String idempotencyKey) {
-        Optional<PayIdempotency> existing = idempotencyService.findByKey(idempotencyKey);
+        Optional<String> existing = idempotencyService.findByKey(idempotencyKey);
         if (existing.isPresent()) {
-            return JsonUtil.fromJson(existing.get().getResponsePayload(), PayPayment.class);
+            return JsonUtil.fromJson(existing.get(), PayPayment.class);
         }
 
         PayAccount account = accountRepository.findById(request.getPayAccountId())
@@ -72,13 +71,13 @@ public class PaymentService {
         return saved;
     }
 
-    // 잔액 부족(ApiException)은 상위 checkout 서비스에서 자동충전 후 재시도하므로
-    // 여기서 트랜잭션 전체를 rollback-only로 마킹하지 않도록 noRollbackFor를 적용한다.
+    // 잔액 부족(ApiException) 발생 시 상위 checkout 서비스 자동충전 재시도 요구사항
+    // 트랜잭션 rollback-only 마킹 방지 목적 noRollbackFor 적용
     @Transactional(noRollbackFor = ApiException.class)
     public PayPayment completePayment(Long paymentId, String idempotencyKey) {
-        Optional<PayIdempotency> existing = idempotencyService.findByKey(idempotencyKey);
+        Optional<String> existing = idempotencyService.findByKey(idempotencyKey);
         if (existing.isPresent()) {
-            return JsonUtil.fromJson(existing.get().getResponsePayload(), PayPayment.class);
+            return JsonUtil.fromJson(existing.get(), PayPayment.class);
         }
 
         PayPayment payment = getPayment(paymentId);
@@ -95,7 +94,7 @@ public class PaymentService {
         PayAccount account = accountRepository.findByPayUserId(payment.getPayUserId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Account not found"));
 
-        // 포인트/쿠폰 할인 적용 후 실제 지갑에서 차감할 금액을 계산한다.
+        // 포인트/쿠폰 할인 적용 후 실제 지갑 차감 금액 계산 로직
         int pointAmount = payment.getPointAmount() == null ? 0 : payment.getPointAmount();
         int payableAmount = getPayableAmount(payment, pointAmount, account);
 
@@ -105,13 +104,13 @@ public class PaymentService {
         tx.setTransactionType("PAYMENT");
         tx.setDirection("DEBIT");
         tx.setAmount(payableAmount);
-        // 외부 주문번호 prefix로 결제 유형을 태깅해 상위 서비스에서 이용내역 라벨링에 활용한다.
+        // 외부 주문번호 prefix 기반 결제 유형 태깅 처리
         tx.setCategory(resolvePaymentCategory(payment));
         tx.setOccurredAt(LocalDateTime.now());
         transactionRepository.save(tx);
 
         if (pointAmount > 0) {
-            // 포인트 사용 내역을 별도 트랜잭션으로 남겨 추적성을 확보한다.
+            // 포인트 사용 내역 별도 트랜잭션 기록 처리
             PayTransaction pointTx = new PayTransaction();
             pointTx.setPayAccountId(account.getId());
             pointTx.setPayPaymentId(payment.getId());
@@ -175,9 +174,9 @@ public class PaymentService {
 
     @Transactional
     public PayPayment refund(Long paymentId, RefundRequest request, String idempotencyKey) {
-        Optional<PayIdempotency> existing = idempotencyService.findByKey(idempotencyKey);
+        Optional<String> existing = idempotencyService.findByKey(idempotencyKey);
         if (existing.isPresent()) {
-            return JsonUtil.fromJson(existing.get().getResponsePayload(), PayPayment.class);
+            return JsonUtil.fromJson(existing.get(), PayPayment.class);
         }
 
         PayPayment payment = getPayment(paymentId);
