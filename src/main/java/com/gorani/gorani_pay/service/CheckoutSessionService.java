@@ -3,6 +3,8 @@ package com.gorani.gorani_pay.service;
 import com.gorani.gorani_pay.dto.CheckoutPageView;
 import com.gorani.gorani_pay.dto.CheckoutProcessResult;
 import com.gorani.gorani_pay.dto.CheckoutSessionResponse;
+import com.gorani.gorani_pay.dto.CheckoutStatusSnapshot;
+import com.gorani.gorani_pay.dto.MerchantQrPageView;
 import com.gorani.gorani_pay.dto.CreateCheckoutByCodeRequest;
 import com.gorani.gorani_pay.dto.CreateCheckoutSessionRequest;
 import com.gorani.gorani_pay.dto.CreatePaymentRequest;
@@ -25,9 +27,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.net.URLEncoder;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.UUID;
 
 @Slf4j
@@ -47,6 +54,9 @@ public class CheckoutSessionService {
 
     @Value("${app.checkout.base-url:http://localhost:8083}")
     private String checkoutBaseUrl;
+    private final HttpClient callbackHttpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(3))
+            .build();
 
     @Transactional
     public CheckoutSessionResponse createSession(CreateCheckoutSessionRequest request) {
@@ -265,13 +275,10 @@ public class CheckoutSessionService {
             log.info("[Pay] 체크아웃 결제 완료. token={}, paymentId={}, autoChargeUsed={}",
                     sessionToken, payment.getId(), autoCharged);
 
-            String redirectUrl = UriComponentsBuilder.fromUriString(session.getSuccessUrl())
-                    .queryParam("orderId", session.getExternalOrderId())
-                    .queryParam("paymentId", payment.getId())
-                    .queryParam("amount", session.getAmount())
-                    .queryParam("status", "COMPLETED")
-                    .build(true)
-                    .toUriString();
+            String redirectUrl = buildSuccessRedirectUrl(session, payment.getId());
+            if (session.getChannel() == PayCheckoutChannel.QR) {
+                notifyMerchantCallback(redirectUrl);
+            }
 
             return CheckoutProcessResult.builder()
                     .redirectUrl(redirectUrl)
@@ -282,12 +289,10 @@ public class CheckoutSessionService {
             session.markFailed(errorMessage);
             log.error("[Pay] 체크아웃 결제 실패. token={}, message={}", sessionToken, errorMessage, ex);
 
-            String redirectUrl = UriComponentsBuilder.fromUriString(session.getFailUrl())
-                    .queryParam("orderId", session.getExternalOrderId())
-                    .queryParam("status", "FAILED")
-                    .queryParam("message", URLEncoder.encode(errorMessage, StandardCharsets.UTF_8))
-                    .build(true)
-                    .toUriString();
+            String redirectUrl = buildFailRedirectUrl(session, errorMessage);
+            if (session.getChannel() == PayCheckoutChannel.QR) {
+                notifyMerchantCallback(redirectUrl);
+            }
 
             return CheckoutProcessResult.builder()
                     .redirectUrl(redirectUrl)
@@ -350,6 +355,34 @@ public class CheckoutSessionService {
 
         return session.getIntegrationType() == PayCheckoutIntegrationType.PAY_LOGIN
                 || session.getIntegrationType() == PayCheckoutIntegrationType.OAUTH;
+    }
+
+    @Transactional(readOnly = true)
+    public CheckoutStatusSnapshot getStatusSnapshot(String sessionToken) {
+        PayCheckoutSession session = getSessionByToken(sessionToken);
+        return new CheckoutStatusSnapshot(
+                session.getSessionToken(),
+                session.getStatus().name(),
+                session.getChannel().name(),
+                buildSuccessRedirectUrl(session, session.getPaymentId()),
+                buildFailRedirectUrl(session, session.getErrorMessage())
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public MerchantQrPageView getMerchantQrPageView(String sessionToken) {
+        PayCheckoutSession session = getSessionByToken(sessionToken);
+        return new MerchantQrPageView(
+                session.getSessionToken(),
+                session.getTitle(),
+                session.getStatus().name()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public String getQrPayload(String sessionToken) {
+        PayCheckoutSession session = getSessionByToken(sessionToken);
+        return buildQrPayload(session);
     }
 
     private CreatePaymentRequest toCreatePaymentRequest(PayCheckoutSession session) {
@@ -448,5 +481,41 @@ public class CheckoutSessionService {
                 .status(session.getStatus().name())
                 .expiresAt(session.getExpiresAt())
                 .build();
+    }
+
+    private String buildSuccessRedirectUrl(PayCheckoutSession session, Long paymentId) {
+        return UriComponentsBuilder.fromUriString(session.getSuccessUrl())
+                .queryParam("orderId", session.getExternalOrderId())
+                .queryParam("paymentId", paymentId)
+                .queryParam("amount", session.getAmount())
+                .queryParam("status", "COMPLETED")
+                .build(true)
+                .toUriString();
+    }
+
+    private String buildFailRedirectUrl(PayCheckoutSession session, String errorMessage) {
+        String resolvedMessage = errorMessage == null || errorMessage.isBlank()
+                ? "결제 처리 중 오류 발생"
+                : errorMessage;
+        return UriComponentsBuilder.fromUriString(session.getFailUrl())
+                .queryParam("orderId", session.getExternalOrderId())
+                .queryParam("status", "FAILED")
+                .queryParam("message", URLEncoder.encode(resolvedMessage, StandardCharsets.UTF_8))
+                .build(true)
+                .toUriString();
+    }
+
+    private void notifyMerchantCallback(String callbackUrl) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(callbackUrl))
+                    .timeout(Duration.ofSeconds(5))
+                    .build();
+            HttpResponse<Void> response = callbackHttpClient.send(request, HttpResponse.BodyHandlers.discarding());
+            log.info("[Pay] QR 콜백 전송 완료. url={}, statusCode={}", callbackUrl, response.statusCode());
+        } catch (Exception ex) {
+            log.warn("[Pay] QR 콜백 전송 실패. url={}, reason={}", callbackUrl, ex.getMessage());
+        }
     }
 }

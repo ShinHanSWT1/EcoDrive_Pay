@@ -74,6 +74,9 @@ app:
         coopang-market:
           allowed-integrations:
             - PAY_LOGIN
+        shinhan-oilbank:
+          allowed-integrations:
+            - PAY_LOGIN
   toss:
     secret-key: ${TOSS_SECRET_KEY}
     url: https://api.tosspayments.com/v1/payments/confirm
