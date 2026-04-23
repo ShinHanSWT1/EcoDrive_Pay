@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173", "http://localhost:9999", "https://dev-gorani.lab.terminal-lab.kr"));
+                    config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173", "http://localhost:9999", "https://dev-gorani.lab.terminal-lab.kr", "https://eri.gorani.shinhanacademy.co.kr", "https://www-gorani.lab.terminal-lab.kr"));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
