@@ -20,6 +20,9 @@ public class RedisConfig {
     @Value("${spring.data.redis.port:6379}")
     private int port;
 
+    @Value("${spring.data.redis.password:gorani}") // 비밀번호 주입 (기본값 gorani)
+    private String password;
+
     // Redis 템플릿 빈 설정
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -39,8 +42,11 @@ public class RedisConfig {
     @Bean
     public RedissonClient redissonClient() {
         Config config = new Config();
+        // redis://host:port 형식으로 주소를 설정하고 비밀번호를 추가합니다.
         config.useSingleServer()
-                .setAddress("redis://" + host + ":" + port);
+                .setAddress("redis://" + host + ":" + port)
+                .setPassword(password); // [이 줄이 반드시 들어가야 합니다!]
+
         return Redisson.create(config);
     }
 }
