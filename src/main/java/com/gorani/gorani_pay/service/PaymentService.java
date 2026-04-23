@@ -43,6 +43,16 @@ public class PaymentService {
             return JsonUtil.fromJson(existing.get(), PayPayment.class);
         }
 
+        Optional<PayPayment> existingPayment = paymentRepository.findByExternalOrderId(request.getExternalOrderId());
+        if (existingPayment.isPresent()) {
+            PayPayment payment = existingPayment.get();
+            if (!payment.getPayUserId().equals(request.getPayUserId())
+                    || !payment.getPayAccountId().equals(request.getPayAccountId())) {
+                throw new ApiException(HttpStatus.CONFLICT, "Payment already exists with different owner");
+            }
+            return payment;
+        }
+
         PayAccount account = accountRepository.findById(request.getPayAccountId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Account not found"));
         if (!account.getPayUserId().equals(request.getPayUserId())) {
@@ -71,8 +81,8 @@ public class PaymentService {
         return saved;
     }
 
-    // 잔액 부족(ApiException) 발생 시 상위 checkout 서비스 자동충전 재시도 요구사항
-    // 트랜잭션 rollback-only 마킹 방지 목적 noRollbackFor 적용
+    // ?붿븸 遺議?ApiException) 諛쒖깮 ???곸쐞 checkout ?쒕퉬???먮룞異⑹쟾 ?ъ떆???붽뎄?ы빆
+    // ?몃옖??뀡 rollback-only 留덊궧 諛⑹? 紐⑹쟻 noRollbackFor ?곸슜
     @Transactional(noRollbackFor = ApiException.class)
     public PayPayment completePayment(Long paymentId, String idempotencyKey) {
         Optional<String> existing = idempotencyService.findByKey(idempotencyKey);
@@ -94,23 +104,26 @@ public class PaymentService {
         PayAccount account = accountRepository.findByPayUserId(payment.getPayUserId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Account not found"));
 
-        // 포인트/쿠폰 할인 적용 후 실제 지갑 차감 금액 계산 로직
+        // ?ъ씤??荑좏룿 ?좎씤 ?곸슜 ???ㅼ젣 吏媛?李④컧 湲덉븸 怨꾩궛 濡쒖쭅
         int pointAmount = payment.getPointAmount() == null ? 0 : payment.getPointAmount();
         int payableAmount = getPayableAmount(payment, pointAmount, account);
 
-        PayTransaction tx = new PayTransaction();
-        tx.setPayAccountId(account.getId());
-        tx.setPayPaymentId(payment.getId());
-        tx.setTransactionType("PAYMENT");
-        tx.setDirection("DEBIT");
-        tx.setAmount(payableAmount);
-        // 외부 주문번호 prefix 기반 결제 유형 태깅 처리
-        tx.setCategory(resolvePaymentCategory(payment));
-        tx.setOccurredAt(LocalDateTime.now());
-        transactionRepository.save(tx);
+        PayTransaction tx = null;
+        if (payableAmount > 0) {
+            tx = new PayTransaction();
+            tx.setPayAccountId(account.getId());
+            tx.setPayPaymentId(payment.getId());
+            tx.setTransactionType("PAYMENT");
+            tx.setDirection("DEBIT");
+            tx.setAmount(payableAmount);
+            // ?몃? 二쇰Ц踰덊샇 prefix 湲곕컲 寃곗젣 ?좏삎 ?쒓퉭 泥섎━
+            tx.setCategory(resolvePaymentCategory(payment));
+            tx.setOccurredAt(LocalDateTime.now());
+            transactionRepository.save(tx);
+        }
 
         if (pointAmount > 0) {
-            // 포인트 사용 내역 별도 트랜잭션 기록 처리
+            // ?ъ씤???ъ슜 ?댁뿭 蹂꾨룄 ?몃옖??뀡 湲곕줉 泥섎━
             PayTransaction pointTx = new PayTransaction();
             pointTx.setPayAccountId(account.getId());
             pointTx.setPayPaymentId(payment.getId());
@@ -123,16 +136,18 @@ public class PaymentService {
             account.deductPoints((long) pointAmount);
         }
 
-        account.deductBalance(payableAmount);
-        ledgerService.record(
-                tx.getId(),
-                account.getId(),
-                "DEBIT",
-                payableAmount,
-                account.getBalance(),
-                "PAYMENT",
-                payment.getId()
-        );
+        if (payableAmount > 0 && tx != null) {
+            account.deductBalance(payableAmount);
+            ledgerService.record(
+                    tx.getId(),
+                    account.getId(),
+                    "DEBIT",
+                    payableAmount,
+                    account.getBalance(),
+                    "PAYMENT",
+                    payment.getId()
+            );
+        }
 
         payment.setStatus("COMPLETED");
         payment.setApprovedAt(LocalDateTime.now());
@@ -285,3 +300,4 @@ public class PaymentService {
         return "GENERAL";
     }
 }
+

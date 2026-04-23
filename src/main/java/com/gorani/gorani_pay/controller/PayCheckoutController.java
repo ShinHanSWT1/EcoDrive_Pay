@@ -272,7 +272,7 @@ public class PayCheckoutController {
                   </script>
                 </body>
                 </html>
-                """.formatted(merchant, title, view.amount(), view.walletBalance(), bankCode, accountNumber, ownerName, token);
+                """.formatted(merchant, title, view.finalPayableAmount(), view.walletBalance(), bankCode, accountNumber, ownerName, token);
     }
 
     private String renderInAppCodePage(CheckoutPageView view) {

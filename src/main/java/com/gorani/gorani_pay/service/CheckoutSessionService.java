@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.http.HttpClient;
@@ -286,6 +287,10 @@ public class CheckoutSessionService {
                     .build();
         } catch (Exception ex) {
             String errorMessage = ex.getMessage() == null ? "결제 처리 중 오류 발생" : ex.getMessage();
+            if (TransactionAspectSupport.currentTransactionStatus().isRollbackOnly()) {
+                log.error("[Pay] 체크아웃 실패(롤백 전용 상태). token={}, message={}", sessionToken, errorMessage, ex);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, errorMessage);
+            }
             session.markFailed(errorMessage);
             log.error("[Pay] 체크아웃 결제 실패. token={}, message={}", sessionToken, errorMessage, ex);
 
@@ -389,7 +394,7 @@ public class CheckoutSessionService {
         CreatePaymentRequest request = new CreatePaymentRequest();
         request.setPayUserId(session.getPayUserId());
         request.setPayAccountId(session.getPayAccountId());
-        request.setExternalOrderId(session.getExternalOrderId());
+        request.setExternalOrderId("CHK-" + session.getSessionToken());
         request.setPaymentType("WALLET");
         request.setPayProductId(session.getPayProductId());
         request.setTitle(session.getTitle());
